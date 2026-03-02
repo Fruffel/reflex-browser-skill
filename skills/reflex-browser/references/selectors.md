@@ -39,6 +39,20 @@ Generate selectors that are stable enough for automation and clear enough for re
 - Avoid dynamic IDs/classes unless they are known stable.
 - Use explicit waits for interactive transitions.
 
+## Repeated Collections
+
+When extracting rows/cards/items:
+
+1. Locate the repeated parent element first (list row/card container).
+2. Index the repeated parent (`... > li:nth-of-type(n)`), not an internal descendant unless that descendant is truly the sibling set.
+3. Scope field selectors under each indexed parent (`title`, `price`, `rating`, etc).
+4. Validate one mid-list selector before full loops (for example item 2 or 3) to catch wrong-level indexing early.
+
+Example:
+
+- Fragile: `css=article.product_pod:nth-of-type(2) h3 a`
+- Better: `css=ol.row > li:nth-of-type(2) h3 a`
+
 ## Recovery Pattern
 
 On selector failure:
@@ -48,3 +62,13 @@ On selector failure:
 3. run `selector_helper` with refined intent
 4. probe candidate with `visible`/`wait`
 5. retry action
+
+Escalation depth:
+
+- Start with `summary` for structural context and quick selector regeneration.
+- Use `html` only when `summary` + `selector_helper` cannot disambiguate structure or hidden state.
+
+Circuit breaker:
+
+- Retry once for transient timing.
+- If the same intent fails twice (`no such element` or timeout), stop iterative extraction, re-discover selectors, and only then resume.

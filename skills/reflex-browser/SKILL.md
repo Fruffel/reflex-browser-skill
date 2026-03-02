@@ -50,6 +50,8 @@ The CLI is single-action per process:
 3. Recompute selectors after DOM changes (`summary` + `selector-helper`).
 4. Stop on first failed command (`ok: false`) to avoid cascading selector errors.
 5. Pass relative links directly to `open`; CLI resolves them against current session URL.
+6. For repeated-item extraction, anchor selectors at the collection parent (for example list/grid item), then index that parent; do not index unrelated descendants.
+7. Treat repeated `no such element` or timeout on the same intent as a selector-state mismatch, not a transient flake.
 
 ## Wait Strategy (Required)
 
@@ -60,6 +62,8 @@ The CLI is single-action per process:
    - after async UI updates
 3. Prefer stable page-level wait targets over fragile positional selectors.
 4. If an action fails once, retry once. If it fails again, run `summary` + `selector-helper` and continue with updated selectors.
+5. After 2 consecutive failures for the same intent, stop the loop and run recovery; never keep incrementing positional selectors blindly.
+6. For `wait`/`visible`/`enabled`/`selected`, pass per-check timeout as the positional argument (`wait "<selector>" 8000`); reserve global `--timeout` for transport/command envelope timeout.
 
 ## Anti-Patterns (Forbidden)
 
@@ -67,6 +71,18 @@ The CLI is single-action per process:
 2. Using `eval` as default extraction when `text`, `summary`, `attribute`, or `property` can answer the task.
 3. Running long blind command chains without validating page state.
 4. Continuing extraction loops after a failed `open`.
+5. Using positional selectors on the wrong structural level (for example `article:nth-of-type(n)` when siblings are actually `li` elements).
+6. Repeating the same failing selector pattern across increasing indexes without re-discovery.
+7. Jumping to full `html` dumps before trying `summary` + `selector-helper` for selector recovery.
+
+## Repeated Items Pattern (Required)
+
+1. Identify the repeated container first (for example `css=ol.row > li`).
+2. Validate the container count/visibility with `wait` or `visible`.
+3. Extract child fields within indexed container selectors (for example `... > li:nth-of-type(2) h3 a`).
+4. Prefer semantic field reads:
+   - `attribute ... title` for titles when present
+   - `text ... .price_color` for visible price text
 
 ## Bash URL Handling (Optional)
 
