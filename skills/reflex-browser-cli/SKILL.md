@@ -23,7 +23,7 @@ The CLI is agent-only:
    - `npm install -g @reflexautomation/browser-cli`
 2. Start shell:
    - `reflex-browser`
-3. Only for persistent coding-agent workflows, start with explicit persistence flags:
+3. Only for persistent coding-agent workflows, use explicit session/profile when needed:
    - `reflex-browser --session ai-run --profile /tmp/reflex-profile`
 4. Wait for `shell_ready`.
 5. Send commands sequentially.

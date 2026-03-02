@@ -33,7 +33,7 @@ Quick test:
 printf '{"id":"1","action":"status"}\n{"id":"2","action":"exit"}\n' | reflex-browser
 ```
 
-Optional persistence flags (only when needed for multi-step agent workflows):
+Optional persistence flag:
 
 ```bash
 reflex-browser --session my-agent --profile /tmp/reflex-profile --timeout 15000
@@ -54,7 +54,6 @@ Environment variables:
 
 - `REFLEX_AGENT_URL`
 - `REFLEX_AGENT_KEY`
-- `REFLEX_BROWSER_SESSION`
 - `REFLEX_BROWSER_PROFILE`
 - `REFLEX_BROWSER_HEADLESS`
 - `REFLEX_BROWSER_WIDTH`

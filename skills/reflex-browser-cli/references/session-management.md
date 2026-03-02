@@ -7,20 +7,24 @@
 3. Use `new`/`restart` when state becomes ambiguous.
 4. End sessions explicitly with `session_kill`.
 
-## CLI Flags: `--session` and `--profile`
+## CLI Flags and Session Overrides
 
 - `--session <name>`:
-  - Sets a deterministic browser session name for the shell.
-  - Use this only when a coding agent needs to reconnect/reuse the exact same session across multiple commands or tool calls.
-  - If omitted, the CLI auto-generates a unique session name (for example `session-a1b2c3d4`) to avoid accidental session sharing.
+  - Sets the session for this CLI shell run only.
+  - Use this when a coding agent needs deterministic session reuse.
+  - This value is intentionally not read from config files or environment variables.
 
 - `--profile <path>`:
   - Sets a persistent browser profile directory (cookies, local storage, other browser state).
   - Use this only when persistent browser state is intentionally required.
   - If omitted, no explicit persistent profile is forced by the CLI.
 
+- `session` (per-command payload field):
+  - Use this only when a coding agent intentionally needs to target a specific existing session.
+  - If omitted, the agent controls session assignment for the shell flow.
+
 - Recommended default for normal use:
-  - Start with `reflex-browser` and do not pass either flag unless persistence is required.
+  - Start with `reflex-browser` and do not pass `--profile` unless persistence is required.
 
 ## Bootstrap and Reuse
 
