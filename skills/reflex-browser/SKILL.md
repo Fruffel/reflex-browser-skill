@@ -41,6 +41,7 @@ The CLI is agent-only:
 5. Start a second shell only if the original shell is unusable (transport disconnected, process crashed, or explicit user request).
 6. If a replacement shell is started, continue the task there and do not keep multiple active shells for the same task.
 7. When done, run `session_kill` for created sessions, then `exit`.
+8. Execute commands interactively: send one action, inspect response, then send the next action.
 
 ## Session Selection Rules
 
@@ -53,11 +54,37 @@ The CLI is agent-only:
 
 1. Bridge is Chrome-only.
 2. Do **not** send `options.browser`.
-3. Use explicit waits for state transitions (`wait`, `openWait`).
+3. Default to one shell process and one sequential command stream.
 4. Recompute selectors after DOM changes (`summary` + `selector_helper`).
+
+## Wait Strategy (Required)
+
+1. `click`, `fill`, `type`, and `open` already include built-in waiting behavior. Do not add redundant `wait` before every interaction.
+2. Use explicit `wait` only for real state transitions:
+   - after navigation
+   - after `back` / `forward` / `refresh`
+   - after actions that trigger async UI updates
+3. Prefer waiting on stable page-level targets (container, heading, route-specific marker), not fragile `nth-child` selectors.
+4. If an action fails once, rerun it once. If it fails again, run `summary` + `selector_helper` and continue with updated selectors.
+5. Avoid long wait chains; keep waits minimal and intentional.
+
+## Runtime Queue Behavior
+
+1. Interactive terminal mode: CLI emits `action: "waiting_response"` and pauses input while a command is in flight.
+2. Non-interactive/piped mode: queueing is rejected with `action: "queue"`.
+3. Always follow `send one action -> wait for response -> send next action`.
+
+## Anti-Patterns (Forbidden)
+
+1. Starting new shells for retries while the current shell is still healthy.
+2. Piping live shell output through `grep`/`tail` during active command flows.
+3. Using `eval` as the default data extraction path when `text`, `summary`, `attribute`, or `property` can answer the task.
+4. Sending long pre-queued command batches (heredoc/large JSONL blocks) without checking each response in between.
 
 ## References
 
+- Worked examples and transcripts:
+  - `examples/books-fiction-horror.md`
 - Command catalog and argument semantics:
   - `references/commands.md`
 - Protocol, payload schema, and response shape:

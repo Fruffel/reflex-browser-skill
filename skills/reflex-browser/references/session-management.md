@@ -59,6 +59,7 @@ For action failures with stale/changed DOM:
 2. run `summary`
 3. rerun `selector_helper`
 4. retry action with updated selector
+5. if retry still fails, use one explicit `wait` on a stable marker and retry once
 
 ## Hygiene Checklist
 

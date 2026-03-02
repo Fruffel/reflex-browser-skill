@@ -97,3 +97,5 @@
 3. `open`, `start`, `new`, `restart` consume `options` (`width`, `height`, `headless`, `openWait`).
 4. `options.browser` is not supported.
 5. `stop` is removed; use `session_kill` for explicit cleanup.
+6. `click`/`fill`/`type` generally do not need a separate pre-`wait` when selector quality is good.
+7. Add explicit `wait` after route/state transitions (`open`, `back`, `forward`, `refresh`) or async UI updates.

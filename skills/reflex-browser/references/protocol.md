@@ -5,6 +5,12 @@
 - Input: one JSON object per line on stdin.
 - Output: one JSON object per line on stdout.
 - Startup emits a readiness line (`shell_ready`) after auto-bootstrap `start`.
+- Recommended execution mode: interactive step-by-step (`send -> read response -> decide next`) rather than large pre-queued batches.
+
+Queue behavior:
+
+- Interactive (`stdin` is TTY): emits `{"ok":true,"action":"waiting_response",...}` while a command is in-flight.
+- Non-interactive (piped/redirected input): additional in-flight commands are rejected with `{"ok":false,"action":"queue",...}`.
 
 ## Input Payload
 
