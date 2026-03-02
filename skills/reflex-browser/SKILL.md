@@ -29,6 +29,14 @@ The CLI is agent-only:
 5. Send commands sequentially.
 6. End with `session_kill` for every session created by this flow.
 
+## Shell Lifecycle (Required)
+
+1. Start one long-running `reflex-browser` shell per task and keep it open.
+2. Send all normal step-by-step commands through that same shell connection.
+3. Do not reopen/restart the shell between normal steps.
+4. Reconnect only when transport/session errors occur.
+5. When done, run `session_kill` for created sessions, then `exit`.
+
 ## Hard Rules
 
 1. Bridge is Chrome-only.
