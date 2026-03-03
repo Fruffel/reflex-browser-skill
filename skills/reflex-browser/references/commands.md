@@ -54,7 +54,7 @@ Read output note:
 
 ## Analysis/Debug
 
-- `summary [maxItems] [--intent <query>]`
+- `summary [maxItems] [--intent <query>] [--scope <interactive|content>]`
 - `selectors`
 - `lua` (alias: `generate`)
 - `screenshot`

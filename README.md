@@ -96,10 +96,21 @@ reflex-browser wait "css=.dashboard" 8000 --session my-session
 Get ranked locator hints for an intent:
 
 ```bash
-reflex-browser summary 25 --intent "click login button" --session my-session
+reflex-browser summary 25 --intent "vacature data architect link" --session my-session
+```
+
+Include content blocks (while still keeping interactive candidates):
+
+```bash
+reflex-browser summary 25 --intent "vacature eisen verantwoordelijkheden" --scope content --session my-session
 ```
 
 Prefer summary hints first and fetch `html` only as a last resort when all high/medium-confidence candidates are weak or fail validation.
+
+`--intent` is keyword-oriented (locator targeting), not a full extraction prompt.
+Good: `--intent "submit contact form button"`, `--intent "vacature test engineer link"`.
+Default scope is interactive. Use `--scope content` when the goal is text/content blocks.
+Use `html`, `text`, or field-specific reads for deep content extraction.
 
 ## JSON Output Envelope
 

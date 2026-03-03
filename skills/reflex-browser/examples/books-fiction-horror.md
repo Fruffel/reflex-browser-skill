@@ -1,4 +1,4 @@
-# Example: Fiction then Horror (Stateless Commands)
+# Example: Fiction then Horror (Capture-First + Summary-Driven)
 
 ## User Prompt
 
@@ -6,68 +6,50 @@
 
 ## Execution Rules Applied
 
-1. One logical session id reused across commands.
-2. One command per process invocation.
-3. Sequential execution: inspect each JSON response before next step.
+1. One logical session reused end-to-end.
+2. Capture full JSON first for each command, then parse from the captured payload.
+3. Use `summary --intent` for navigation selector discovery after each navigation step.
+4. Close the session at the end.
 
-## Command Sequence
-
-```bash
-reflex-browser start
-reflex-browser open "https://books.toscrape.com/index.html" --session <sessionId>
-reflex-browser click "a[href*='fiction_10']" --session <sessionId>
-reflex-browser wait "css=section > div > ol.row > li:nth-of-type(1) article.product_pod" 8000 --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(1) h3 a" --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(2) h3 a" --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(3) h3 a" --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(4) h3 a" --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(1) .price_color" --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(2) .price_color" --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(3) .price_color" --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(4) .price_color" --session <sessionId>
-reflex-browser open "https://books.toscrape.com/catalogue/category/books/horror_31/index.html" --session <sessionId>
-reflex-browser wait "css=section > div > ol.row > li:nth-of-type(1) article.product_pod" 8000 --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(1) h3 a" --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(2) h3 a" --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(3) h3 a" --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(4) h3 a" --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(1) .price_color" --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(2) .price_color" --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(3) .price_color" --session <sessionId>
-reflex-browser text "css=section > div > ol.row > li:nth-of-type(4) .price_color" --session <sessionId>
-reflex-browser session-kill <sessionId> --session <sessionId>
-```
-
-## Safe Link Traversal Pattern (When Opening Book Detail Pages)
-
-Use this pattern to avoid malformed relative links and wrong-page selector runs:
+## Command Sequence (Bash)
 
 ```bash
-reflex-browser url --session <sessionId>
-# assume response.data.url is listingUrl
-reflex-browser attribute "css=ol.row > li:nth-of-type(1) h3 a" "href" --session <sessionId>
-# assume response.data.value is linkHref
-reflex-browser open "<linkHref>" --session <sessionId>
-# CLI resolves relative hrefs against listingUrl automatically
-reflex-browser text "css=article.product_page h1" --session <sessionId>
+source skills/reflex-browser/scripts/capture_json.sh
+
+R_START=$(rb_capture start)
+S=$(rb_jq "$R_START" '.session // .response.data.session')
+
+R_OPEN=$(rb_capture open "https://books.toscrape.com/index.html" --session "$S")
+
+R_SUM_HOME=$(rb_capture summary 20 --intent "fiction_10 category link" --session "$S")
+FSEL=$(rb_pick_selector "$R_SUM_HOME" "fiction_10")
+R_CLICK_F=$(rb_capture click "$FSEL" --session "$S")
+
+for i in 1 2 3 4; do
+  TITLE=$(rb_jq "$(rb_capture attribute "css=section > div > ol.row > li:nth-of-type(${i}) h3 a" "title" --session "$S")" '.response.data.value')
+  PRICE=$(rb_jq "$(rb_capture text "css=section > div > ol.row > li:nth-of-type(${i}) p.price_color" --session "$S")" '.response.data.value')
+  echo "Fiction #$i: $TITLE - $PRICE"
+done
+
+R_SUM_FICTION=$(rb_capture summary 20 --intent "horror_31 category link" --session "$S")
+HSEL=$(rb_pick_selector "$R_SUM_FICTION" "horror_31")
+R_CLICK_H=$(rb_capture click "$HSEL" --session "$S")
+
+for i in 1 2 3 4; do
+  TITLE=$(rb_jq "$(rb_capture attribute "css=section > div > ol.row > li:nth-of-type(${i}) h3 a" "title" --session "$S")" '.response.data.value')
+  PRICE=$(rb_jq "$(rb_capture text "css=section > div > ol.row > li:nth-of-type(${i}) p.price_color" --session "$S")" '.response.data.value')
+  echo "Horror #$i: $TITLE - $PRICE"
+done
+
+R_LUA=$(rb_capture lua --session "$S")
+RAW_SCRIPT=$(rb_jq "$R_LUA" '.response.message')
+GUIDANCE=$(rb_jq "$R_LUA" '.response.data.generationGuidance // []')
+
+rb_capture session-kill "$S" --session "$S" >/dev/null
 ```
 
-## Observed Session
+## Notes
 
-- Example run returned: `session-dcbe75da`
-
-## Result Summary
-
-### Fiction (first 4)
-
-1. `Soumission` - `£50.10`
-2. `Private Paris (Private #10)` - `£47.61`
-3. `We Love You, Charlie ...` - `£50.27`
-4. `Thirst` - `£17.27`
-
-### Horror (first 4)
-
-1. `Security` - `£39.25`
-2. `Follow You Home` - `£21.36`
-3. `The Loney` - `£23.40`
-4. `Pet Sematary` - `£10.56`
+- This example intentionally avoids direct `jq | head` pipes on live command output.
+- Full response capture keeps debugging context intact when selector picks are wrong.
+- `RAW_SCRIPT` is trace output; apply `generationGuidance` if a human-usable Lua script is needed.

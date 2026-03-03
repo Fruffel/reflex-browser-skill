@@ -6,6 +6,7 @@
 - Most commands send exactly one backend action.
 - Output: exactly one JSON object on stdout.
 - Exit code: `0` on success, `1` on failure.
+- Prefer explicit sequential invocations over bundled shell scripts so each step is inspectable.
 
 ## Command Contract
 
@@ -34,6 +35,7 @@ CLI builds one backend payload with:
 - `action`
 - `arg1`
 - `arg2`
+- `arg3`
 - `session`
 - `profile`
 - `options` (only for bootstrap/open commands)
@@ -43,6 +45,10 @@ CLI builds one backend payload with:
 Smart preflight behavior:
 
 - if `open` receives a relative URL, CLI requests current URL and resolves `arg1` before sending `open`
+
+Connection lifecycle:
+
+- each CLI invocation opens one WebSocket request lifecycle and closes it after completion/failure
 
 ## Output Envelope
 
@@ -54,6 +60,14 @@ All command responses follow:
 - `timingMs`
 - `response` (raw backend response)
 - `message` (error details)
+
+Response-consumption rule:
+
+- capture full JSON first, then parse/select fields from that captured response object
+
+Shell helper option:
+
+- source `skills/reflex-browser/scripts/capture_json.sh` (from project root) to enforce capture-first parsing in Bash workflows
 
 Use `url` explicitly to verify page context before selector-heavy sequences.
 

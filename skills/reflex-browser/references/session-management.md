@@ -6,13 +6,15 @@
 2. Start once, then pass the same `--session` for each follow-up command.
 3. Use `new` or `restart` when state is ambiguous.
 4. End sessions explicitly with `session-kill`.
+5. Reuse active sessions before starting a new browser window.
 
 ## Stateless Workflow
 
-1. Run `reflex-browser start`.
-2. Read returned JSON and capture `session`.
-3. Run subsequent commands with `--session <sessionId>`.
-4. Run `session-kill <targetSession> --session <sessionId>` when complete.
+1. Reuse an existing session when it already matches the target flow.
+2. Run `reflex-browser start` when a fresh session is needed.
+3. Read returned JSON and capture `session`.
+4. Run subsequent commands with `--session <sessionId>`.
+5. Run `session-kill <targetSession> --session <sessionId>` when complete.
 
 ## Session and Profile Options
 
@@ -47,6 +49,7 @@ For action failures with stale DOM:
 1. re-check `url` and `title`
 2. verify expected page context before selector actions
 3. run `summary --intent "<intent>"`
+   - add `--scope content` when intent is to locate requirement/description text blocks
 4. retry action with updated high-confidence selector hint
 5. request `html` only if hints remain weak after retries
 

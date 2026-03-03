@@ -35,19 +35,41 @@ The CLI is single-action per process:
 3. Do not omit `--session` on non-`start` commands.
 4. Execute sequentially: run one command, inspect response, then run the next.
 5. On transport failure, rerun the command as a new invocation.
-6. Cleanup with `session-kill` when done.
+6. If you started a session for the task, cleanup with `session-kill` when done unless the user explicitly asks to keep it open.
+
+## Response Handling (Required)
+
+1. Always capture the full JSON response first, then parse fields from that captured payload.
+2. Do not pipe command output directly into filtering (`jq | head`) as the only observable output; this hides critical context.
+3. Prefer in-memory capture over temp files; if temp files are needed, use ephemeral files and clean them up.
+
+Helper script:
+
+- `scripts/capture_json.sh` provides `rb_capture`, `rb_jq`, and `rb_pick_selector` for safe full-response handling.
+- source via `source skills/reflex-browser/scripts/capture_json.sh` (from project root).
+
+## Lua Output Handling
+
+1. Treat `lua` action output as a raw trace by default.
+2. If `response.data.generationGuidance` is present, apply it to produce a human-usable Lua 5.2 script.
+3. Keep discovered selectors as-is when guidance says selectors are fixed.
+4. Return both:
+   - raw generated script (for traceability)
+   - enhanced runnable script (for human use)
 
 ## Session Selection Rules
 
-1. Default: run `start` without `--session` and reuse returned session id.
-2. Use `start --session <id>` only when deterministic naming is required.
-3. Pass `--profile` only when persistent browser state is intentionally needed.
+1. Reuse an existing session when available and appropriate for the task.
+2. Use `start` when a fresh browser context is needed.
+3. Use `start --session <id>` only when deterministic naming is required.
+4. Pass `--profile` only when persistent browser state is intentionally needed.
 
 ## Hard Rules
 
 1. Bridge is Chrome-only.
 2. Do **not** send `options.browser`.
 3. Recompute selectors after DOM changes (`summary --intent`).
+   - Use default interactive scope; pass `--scope content` only when targeting content text blocks.
 4. Stop on first failed command (`ok: false`) to avoid cascading selector errors.
 5. Pass relative links directly to `open`; CLI resolves them against current session URL.
 6. For repeated-item extraction, anchor selectors at the collection parent (for example list/grid item), then index that parent; do not index unrelated descendants.
@@ -74,6 +96,8 @@ The CLI is single-action per process:
 5. Using positional selectors on the wrong structural level (for example `article:nth-of-type(n)` when siblings are actually `li` elements).
 6. Repeating the same failing selector pattern across increasing indexes without re-discovery.
 7. Jumping to full `html` dumps before trying `summary --intent` for selector recovery.
+8. Starting extra sessions during the same task without explicit need and cleanup.
+9. Hiding browser flow in long shell scripts/loops instead of observable one-command-at-a-time CLI calls.
 
 ## Repeated Items Pattern (Required)
 

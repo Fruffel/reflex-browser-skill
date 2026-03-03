@@ -11,7 +11,8 @@ Generate selectors that are stable enough for automation and clear enough for re
 2. Guard page identity before selectors:
    - run `url` and verify expected page context.
 3. Ask summary for ranked hints:
-   - run `summary --intent "<intent>"`.
+   - run `summary --intent "<keywords>"` (short locator keywords, not a long extraction prompt).
+   - default scope is interactive; add `--scope content` when intent targets page text/requirements blocks.
 4. Validate without mutation:
    - run `visible` or `wait` with candidate selector.
 5. Perform action:
@@ -60,6 +61,7 @@ On selector failure:
 1. capture `summary`
 2. re-check with `url`
 3. run `summary --intent` with refined intent
+   - add `--scope content` only when content blocks are the target
 4. probe candidate with `visible`/`wait`
 5. retry action
 
