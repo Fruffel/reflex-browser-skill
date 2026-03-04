@@ -12,7 +12,7 @@ Use this skill when you need browser automation through Reflex Agent via statele
 The CLI is single-action per process:
 
 - run one `reflex-browser <command>` invocation
-- pass `--session` on all non-`start` actions
+- `--session` is optional; omitted commands use machine+repo auto-session
 - read one JSON response from stdout
 
 ## Quick Start
@@ -26,13 +26,13 @@ The CLI is single-action per process:
 3. Capture returned `session` from JSON response.
 4. Reuse that session id on each next command:
    - `reflex-browser open https://example.com --session <sessionId>`
-5. End with `session-kill <targetSession> --session <sessionId>` for sessions created by this flow.
+5. End with `session-kill [targetSession]` (or `session-kill --session <sessionId>`) for sessions created by this flow.
 
 ## Command Lifecycle (Required)
 
 1. Send actions as separate CLI invocations.
 2. Keep one logical session id for the task.
-3. Do not omit `--session` on non-`start` commands.
+3. Omit `--session` when auto-session behavior is preferred; set it explicitly when deterministic override is required.
 4. Execute sequentially: run one command, inspect response, then run the next.
 5. On transport failure, rerun the command as a new invocation.
 6. If you started a session for the task, cleanup with `session-kill` when done unless the user explicitly asks to keep it open.
@@ -42,6 +42,22 @@ The CLI is single-action per process:
 1. Always capture the full JSON response first, then parse fields from that captured payload.
 2. Do not pipe command output directly into filtering (`jq | head`) as the only observable output; this hides critical context.
 3. Prefer in-memory capture over temp files; if temp files are needed, use ephemeral files and clean them up.
+4. Treat envelope fields (`ok`, `action`, `session`) as source-of-truth; mirrored duplicates may be compacted out of `response`.
+
+## Parser-First Summary Contract (Required)
+
+1. For selector discovery that feeds agent logic, use `summary` with optional `--intent` first.
+2. Parse `response.data.summary.targets[]` as the primary selector feed:
+   - `selector`
+   - `selectorType`
+   - `confidence`
+   - `reason`
+3. Treat `summary.version` + `summary.targets[]` as the stable parser contract; avoid parsing deep fields from full summary output by default.
+4. Do not parse `elements`/`actions`/`candidates`-style fields from summary output.
+5. Keep extraction flow deterministic:
+   - summary for candidate selection
+   - targeted action (`click`/`text`/`attribute`/etc.)
+   - re-run summary only after DOM-changing actions when needed
 
 Helper script:
 
@@ -60,7 +76,7 @@ Helper script:
 ## Session Selection Rules
 
 1. Reuse an existing session when available and appropriate for the task.
-2. Use `start` when a fresh browser context is needed.
+2. Use `start` to get-or-create the scoped auto-session unless a fresh explicit id is required.
 3. Use `start --session <id>` only when deterministic naming is required.
 4. Pass `--profile` only when persistent browser state is intentionally needed.
 
@@ -146,8 +162,6 @@ function Open-Target {
 
 ## References
 
-- Worked examples:
-  - `examples/books-fiction-horror.md`
 - Command catalog and flags:
   - `references/commands.md`
 - CLI protocol contract:

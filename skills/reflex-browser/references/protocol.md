@@ -18,8 +18,9 @@ Global flags:
 
 Session contract:
 
-- `start`: `--session <id>` optional
-- all other action commands: `--session <id>` required
+- `--session <id>` is optional on all commands
+- if omitted, CLI resolves a deterministic auto-session per `machine + repo`
+- explicit `--session` always overrides auto-session inference
 
 Bootstrap/open options (`start`, `new`, `restart`, `open` only):
 
@@ -45,6 +46,7 @@ CLI builds one backend payload with:
 Smart preflight behavior:
 
 - if `open` receives a relative URL, CLI requests current URL and resolves `arg1` before sending `open`
+- missing/stale auto-sessions are recreated automatically before command dispatch
 
 Connection lifecycle:
 
@@ -58,8 +60,14 @@ All command responses follow:
 - `action`
 - `session` (effective session when known)
 - `timingMs`
-- `response` (raw backend response)
+- `response` (backend payload, compacted by CLI)
 - `message` (error details)
+
+Compaction rules:
+
+- `response.success` is omitted (use envelope `ok`)
+- duplicated `response.session` matching envelope `session` is omitted
+- duplicated `response.data` context fields that mirror envelope/response state are omitted (`action`, `session`, repeated page-state keys)
 
 Response-consumption rule:
 

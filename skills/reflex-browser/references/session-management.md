@@ -3,7 +3,7 @@
 ## Core Principles
 
 1. Use one session id per automation flow.
-2. Start once, then pass the same `--session` for each follow-up command.
+2. By default, let CLI infer auto-session from machine+repo scope when `--session` is omitted.
 3. Use `new` or `restart` when state is ambiguous.
 4. End sessions explicitly with `session-kill`.
 5. Reuse active sessions before starting a new browser window.
@@ -12,15 +12,15 @@
 
 1. Reuse an existing session when it already matches the target flow.
 2. Run `reflex-browser start` when a fresh session is needed.
-3. Read returned JSON and capture `session`.
-4. Run subsequent commands with `--session <sessionId>`.
-5. Run `session-kill <targetSession> --session <sessionId>` when complete.
+3. Read returned JSON and capture `session` when explicit reuse is needed.
+4. Run subsequent commands without `--session` (or pass explicit `--session <sessionId>` to override).
+5. Run `session-kill [targetSession]` when complete.
 
 ## Session and Profile Options
 
 - `--session <id>`:
-  - optional on `start`
-  - required on all other commands
+  - optional on all commands
+  - omitted value resolves to scoped auto-session
   - use explicit values only when deterministic naming is needed
 
 - `--profile <path>`:
@@ -33,7 +33,7 @@
 - `new`: force a fresh session context
 - `restart`: restart session context
 - `session-list`: inspect active sessions
-- `session-kill <targetSession>`: terminate one named session
+- `session-kill [targetSession]`: terminate one named session or inferred session when omitted
 
 ## Failure Recovery
 

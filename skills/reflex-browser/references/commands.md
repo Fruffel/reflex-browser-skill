@@ -9,7 +9,7 @@
 - `session`
 - `session-current` -> backend action `session_current`
 - `session-list` -> backend action `session_list`
-- `session-kill <targetSession>` -> backend action `session_kill`
+- `session-kill [targetSession]` -> backend action `session_kill`
 
 ## Navigation/Page
 
@@ -69,8 +69,9 @@ Global flags for all commands:
 
 Session flag rule:
 
-- `start`: `--session <id>` optional
-- all other commands: `--session <id>` required
+- `--session <id>` optional on all commands
+- omitted `--session` uses machine+repo scoped auto-session
+- explicit `--session` always overrides auto-session inference
 
 Bootstrap/open flags (only on `start`, `new`, `restart`, `open`):
 

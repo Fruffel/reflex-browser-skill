@@ -38,8 +38,9 @@ Global flags (available on every command):
 
 Session flag:
 
-- `start`: `--session <id>` optional
-- all other commands: `--session <id>` required
+- `--session <id>` is optional on all commands
+- when omitted, CLI resolves an auto-session scoped to machine + repo path
+- explicit `--session` always overrides auto-session behavior
 
 Bootstrap/open flags (supported only by `start`, `new`, `restart`, `open`):
 
@@ -50,7 +51,7 @@ Bootstrap/open flags (supported only by `start`, `new`, `restart`, `open`):
 
 ## Examples
 
-Start a session (agent assigns session id):
+Get or create the default auto-session for current machine + repo:
 
 ```bash
 reflex-browser start
@@ -62,7 +63,13 @@ Start with explicit session id:
 reflex-browser start --session my-session
 ```
 
-Open a URL in an existing session:
+Open a URL without passing `--session` (auto-session is inferred):
+
+```bash
+reflex-browser open https://example.com
+```
+
+Open a URL in an explicit session:
 
 ```bash
 reflex-browser open https://example.com --session my-session
@@ -71,38 +78,38 @@ reflex-browser open https://example.com --session my-session
 Fail fast if page context is wrong:
 
 ```bash
-reflex-browser url --session my-session
+reflex-browser url
 # stop if URL is not what you expect before running selector commands
 ```
 
 Open a relative URL safely (resolved against current session URL):
 
 ```bash
-reflex-browser open "../../../a-book_1/index.html" --session my-session
+reflex-browser open "../../../a-book_1/index.html"
 ```
 
 Fill an input:
 
 ```bash
-reflex-browser fill "css=input[name='email']" "user@example.com" --session my-session
+reflex-browser fill "css=input[name='email']" "user@example.com"
 ```
 
 Wait with custom timeout:
 
 ```bash
-reflex-browser wait "css=.dashboard" 8000 --session my-session
+reflex-browser wait "css=.dashboard" 8000
 ```
 
 Get ranked locator hints for an intent:
 
 ```bash
-reflex-browser summary 25 --intent "vacature data architect link" --session my-session
+reflex-browser summary 25 --intent "vacature data architect link"
 ```
 
 Include content blocks (while still keeping interactive candidates):
 
 ```bash
-reflex-browser summary 25 --intent "vacature eisen verantwoordelijkheden" --scope content --session my-session
+reflex-browser summary 25 --intent "vacature eisen verantwoordelijkheden" --scope content
 ```
 
 Prefer summary hints first and fetch `html` only as a last resort when all high/medium-confidence candidates are weak or fail validation.
@@ -112,6 +119,16 @@ Good: `--intent "submit contact form button"`, `--intent "vacature test engineer
 Default scope is interactive. Use `--scope content` when the goal is text/content blocks.
 Use `html`, `text`, or field-specific reads for deep content extraction.
 
+Summary parser contract:
+
+- `response.data.summary.version`
+- `response.data.summary.targets[]`
+  - `selector`
+  - `selectorType`
+  - `confidence`
+  - `score`
+  - `reason`
+
 ## JSON Output Envelope
 
 All commands print one JSON object:
@@ -120,10 +137,27 @@ All commands print one JSON object:
 - `action`
 - `session` (if known)
 - `timingMs`
-- `response` (raw backend response)
+- `response` (action-specific response payload)
 - `message` (error detail on failure)
 
+Use envelope fields (`ok`, `action`, `session`) as source-of-truth. The CLI compacts mirrored duplicates from `response` where possible.
+
 For read-style actions (`text`, `attribute`, `property`, `value`, `tag`, `title`, `url`), use `response.data.value` as the extracted value.
+
+For `summary`, parse `response.data.summary.targets[]` (not legacy candidate-style fields).
+
+## Auto-Session Scope
+
+- Auto-session key is deterministic per `machine fingerprint + repo root`.
+- Repo root uses `git rev-parse --show-toplevel`; fallback is current working directory.
+- Mapping is stored in global `config.json` (`.../reflex-browser/config.json`) under `autoSessions`.
+- Stale/missing mapped sessions are recreated automatically.
+- `reflex-browser start` without `--session` returns the existing healthy auto-session or recreates it.
+- `session-kill [targetSession]`:
+  - with argument: kills that target session
+  - without argument + `--session`: kills that explicit session
+  - without argument and without `--session`: kills inferred auto-session for current scope
+  - successful kill clears scope mapping when it points to the killed session
 
 ## Configuration
 
