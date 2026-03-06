@@ -1,5 +1,11 @@
 # Command Reference
 
+Quick guidance:
+
+- default to omitted `--session`; scoped auto-session is the normal agent path
+- default to `summary` with `-i`, `-C`, `-c`, `-d`, and `-s` for selector discovery; treat `eval` and `html` as fallback/debug tools
+- use `--help` for syntax lookup, not as the main decision source for workflow strategy
+
 ## Session/System
 
 - `status`
@@ -59,7 +65,7 @@ Interaction output note:
 
 ## Analysis/Debug
 
-- `summary [maxItems] [--intent <query>] [--scope <interactive|content>]`
+- `summary [maxItems]`
 - `selectors`
 - `lua` (alias: `generate`)
 - `screenshot`
@@ -77,6 +83,14 @@ Lua output note:
 Screenshot output note:
 
 - parse `response.data.imageBase64` and `response.data.mimeType`
+
+Summary flags:
+
+- `-i, --interactive`
+- `-C, --cursor`
+- `-c, --compact`
+- `-d, --depth <n>`
+- `-s, --selector <selector>`
 
 ## Flags
 

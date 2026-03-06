@@ -8,17 +8,20 @@ Generate selectors that are stable enough for automation and clear enough for re
 
 1. Inspect page state:
    - run `summary` first.
+   - do not jump to `eval` or `html` unless summary-based recovery is too weak.
 2. Guard page identity before selectors:
    - run `url` and verify expected page context.
 3. Ask summary for ranked hints:
-   - run `summary --intent "<keywords>"` (short locator keywords, not a long extraction prompt).
-   - default scope is interactive; add `--scope content` when intent targets page text/requirements blocks.
+   - run `summary -i -c` for normal interactive discovery.
+   - add `-C` when the page uses non-semantic clickable UI.
+   - add `-s "<selector>"` to narrow discovery to one container.
+   - add `-d <n>` when large pages produce too much noise.
 4. Validate without mutation:
    - run `visible` or `wait` with candidate selector.
 5. Perform action:
    - use `click`, `fill`, `type`, etc.
 6. Re-evaluate after DOM/navigation change:
-   - rerun `summary --intent`.
+   - rerun `summary` with the narrowest useful flags.
 
 ## Preferred Selector Order
 
@@ -61,16 +64,17 @@ On selector failure:
 1. capture `summary`
 2. re-check with `url`
 3. run `summary --intent` with refined intent
-   - add `--scope content` only when content blocks are the target
+   - add `-s` to focus on the likely container
+   - add `-C` if the page is using cursor-driven controls
 4. probe candidate with `visible`/`wait`
 5. retry action
 
 Escalation depth:
 
 - Start with `summary` for structural context and quick selector regeneration.
-- Use `html` only when `summary --intent` yields weak candidates after retry/validation.
+- Use `html` only when `summary` yields weak candidates after retry/validation.
 
 Circuit breaker:
 
 - Retry once for transient timing.
-- If the same intent fails twice, stop iterative extraction and re-discover with `summary --intent` before continuing.
+- If the same intent fails twice, stop iterative extraction and re-discover with `summary` before continuing.

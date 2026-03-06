@@ -7,6 +7,7 @@
 3. Use `start` (idempotent) to ensure a session exists before work.
 4. End sessions explicitly with `session-kill`.
 5. Reuse active sessions before starting a new browser window.
+6. Do not keep repeating `--session` on every command unless you intentionally need an explicit override.
 
 ## Stateless Workflow
 
@@ -47,8 +48,9 @@ For action failures with stale DOM:
 
 1. re-check `url` and `title`
 2. verify expected page context before selector actions
-3. run `summary --intent "<intent>"`
-   - add `--scope content` when intent is to locate requirement/description text blocks
+3. run `summary`
+   - add `-s` to focus on the likely container
+   - add `-C` when the UI is cursor-driven
 4. retry action with updated high-confidence selector hint
 5. request `html` only if hints remain weak after retries
 

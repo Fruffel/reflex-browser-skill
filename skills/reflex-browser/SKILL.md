@@ -31,6 +31,12 @@ The CLI is single-action per process:
 5. End with `session-kill` in auto-session mode.
    - if you used an explicit session id, use `session-kill --session <sessionId>` (or `session-kill <sessionId>`)
 
+Agent defaults:
+
+- do not pass `--session` by habit after `start`; normal flows should stay in scoped auto-session mode
+- prefer `summary` with `-i`, `-C`, `-c`, `-d`, and `-s` for selector discovery and recovery before trying `eval` or `html`
+- use `--help` only as a compact reference; follow this skill and the README examples for workflow shape
+
 ## Command Lifecycle (Required)
 
 1. Send actions as separate CLI invocations.
@@ -49,7 +55,7 @@ The CLI is single-action per process:
 
 ## Parser-First Summary Contract (Required)
 
-1. For selector discovery that feeds agent logic, use `summary` with optional `--intent` first.
+1. For selector discovery that feeds agent logic, use `summary` first.
 2. Parse `response.data.summary.targets[]` as the primary selector feed:
    - `selector`
    - `selectorType`
@@ -93,7 +99,10 @@ Helper script:
 1. Bridge is Chrome-only.
 2. Do **not** send `options.browser`.
 3. Recompute selectors after DOM changes (`summary --intent`).
-   - Use default interactive scope; pass `--scope content` only when targeting content text blocks.
+   - Use `-i` for interactive discovery.
+   - Add `-C` for cursor-interactive components.
+   - Add `-c` to reduce structural noise.
+   - Add `-s <selector>` to scope discovery to a container.
 4. Stop on first failed command (`ok: false`) to avoid cascading selector errors.
 5. Pass relative links directly to `open`; CLI resolves them against current session URL.
 6. For repeated-item extraction, anchor selectors at the collection parent (for example list/grid item), then index that parent; do not index unrelated descendants.
@@ -107,7 +116,7 @@ Helper script:
    - after `back` / `forward` / `refresh`
    - after async UI updates
 3. Prefer stable page-level wait targets over fragile positional selectors.
-4. If an action fails once, retry once. If it fails again, run `summary --intent` and continue with updated selectors.
+4. If an action fails once, retry once. If it fails again, run `summary` again with tighter flags and continue with updated selectors.
 5. After 2 consecutive failures for the same intent, stop the loop and run recovery; never keep incrementing positional selectors blindly.
 6. For `wait`/`visible`/`enabled`/`selected`, pass per-check timeout as the positional argument (`wait "<selector>" 8000`); reserve global `--cli-timeout` for transport/command envelope timeout.
 
@@ -119,10 +128,11 @@ Helper script:
 4. Continuing extraction loops after a failed `open`.
 5. Using positional selectors on the wrong structural level (for example `article:nth-of-type(n)` when siblings are actually `li` elements).
 6. Repeating the same failing selector pattern across increasing indexes without re-discovery.
-7. Jumping to full `html` dumps before trying `summary --intent` for selector recovery.
+7. Jumping to full `html` dumps before trying `summary` for selector recovery.
 8. Starting extra sessions during the same task without explicit need and cleanup.
 9. Hiding browser flow in long shell scripts/loops instead of observable one-command-at-a-time CLI calls.
 10. Passing explicit `--session` by habit in single-flow tasks that should use default auto-session behavior.
+11. Using `--help` mid-task as a substitute for the documented selector/session workflow.
 
 ## Output Contract (Required)
 
@@ -205,3 +215,5 @@ function Open-Target {
   - `references/selectors.md`
 - Session lifecycle and recovery:
   - `references/session-management.md`
+- Worked example:
+  - `examples/books-to-scrape-summary.md`
