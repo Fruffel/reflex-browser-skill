@@ -65,12 +65,34 @@ Agent defaults:
      - `status`
      - `hint`
      - `fallback`
+     - `ref` — short-lived element ref (`@r1`, `@r2`, …); prefer over `selector` when present
 3. Treat `summary.version` + `summary.targets[]` as the stable parser contract; avoid parsing deep fields from full summary output by default.
 4. Do not parse `elements`/`actions`/`candidates`-style fields from summary output.
 5. Keep extraction flow deterministic:
    - summary for candidate selection
    - targeted action (`click`/`text`/`attribute`/etc.)
    - re-run summary only after DOM-changing actions when needed
+
+## Summary Refs (Required)
+
+Each `summary` call assigns short-lived refs (`@r1`, `@r2`, …) to interactive elements:
+
+- Refs appear in `targets[].ref` and inline in `snapshot` lines as `[ref=@rN]`.
+- Pass a ref directly as the selector to any action: `click "@r10"`, `fill "@r5" "text"`, `attribute "@r3" href`.
+- **Prefer refs over CSS/XPath selectors when available** — they resolve directly to the live DOM element, bypassing selector fragility entirely.
+- Refs are **invalidated after any navigation or DOM-mutating action** (`click`, `fill`, `type`, `enter`, `tab`, `open`, `back`, `forward`, `refresh`, tab switches). Re-run `summary` after such actions to obtain fresh refs.
+- A stale ref returns `errorCode: ELEMENT_STALE` with a `recoveryHint` — always re-run `summary` on that error.
+
+```
+# summary returns: - link "Fiction" [ref=@r10]
+reflex-browser click "@r10"              # navigate using ref
+
+# after navigation, refs are invalidated — re-run summary
+reflex-browser summary 20 -i -c
+# - link "Soumission" [ref=@r150]
+reflex-browser attribute "@r150" title   # read without re-discovering selector
+reflex-browser attribute "@r150" href
+```
 
 Helper script:
 
@@ -161,6 +183,7 @@ Helper script:
    - Treat `status: "retry"` as a one-retry candidate, then refresh `summary`.
    - Treat `status: "avoid"` as a recovery hint, not a first-choice selector.
    - Use `fallback` only when the primary selector fails or the target is marked `avoid`.
+   - Use `ref` as the selector when present — it resolves directly to the live element without re-parsing CSS/XPath.
 6. Lua generation:
    - `response.data.script` as canonical script payload
    - `response.data.generationGuidance` as post-processing constraints

@@ -152,6 +152,7 @@ Summary parser contract:
     - `status` (`ready`, `retry`, `avoid`)
     - `hint`
     - `fallback`
+    - `ref` — short-lived element ref (`@r1`, `@r2`, …); use directly as a selector in subsequent actions when present
 
 ## JSON Output Envelope
 

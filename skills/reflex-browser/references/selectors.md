@@ -4,6 +4,25 @@
 
 Generate selectors that are stable enough for automation and clear enough for recovery when pages change.
 
+## Refs: Preferred Selector When Available
+
+`summary` assigns short-lived element refs (`@r1`, `@r2`, …) to each interactive element. When a ref is present, use it as the selector — it resolves directly to the live DOM element and is more reliable than CSS or XPath.
+
+```
+# snapshot line:  - link "Fiction" [ref=@r10]
+# target field:   { "selector": "css=a[href='...']", "ref": "@r10" }
+
+reflex-browser click "@r10"              # preferred
+reflex-browser click "css=a[href='...']" # fallback if ref absent
+```
+
+Ref lifecycle — refs are **invalidated** after any navigation or DOM-mutating action:
+
+- `click` / `fill` / `type` / `enter` / `tab` that causes a DOM change or navigation
+- `open` / `back` / `forward` / `refresh` / tab switches
+
+Always re-run `summary` after such actions before using refs again. A stale ref returns `errorCode: ELEMENT_STALE` — re-run `summary` on that error.
+
 ## Workflow
 
 1. Inspect page state:
