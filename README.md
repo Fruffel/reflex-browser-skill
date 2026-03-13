@@ -33,6 +33,7 @@ reflex-browser <command> [args] [flags]
 Global flags (available on every command):
 
 - `--config <path>`
+- `--engine <selenium|playwright|sel|play>`
 - `--profile <path>`
 - `--cli-timeout <ms>`
   - default CLI command-response timeout is effectively `180000` ms unless explicitly overridden
@@ -49,7 +50,7 @@ Bootstrap/open flags (supported only by `start`, `open`):
 - `--width <px>`
 - `--height <px>`
 - `--headless <true|false>`
-- `--timeout <ms>` (backend Selenium retry timeout for the session)
+- `--timeout <ms>` (backend action timeout for the session)
 - `--open-wait <domcontentloaded|load|networkidle>`
 
 ## Examples
@@ -70,6 +71,12 @@ Start with backend-assigned session id:
 
 ```bash
 reflex-browser start --session
+```
+
+Start a Playwright-backed auto-session:
+
+```bash
+reflex-browser start --engine play
 ```
 
 Open a URL without passing `--session` (auto-session is inferred):
@@ -177,6 +184,8 @@ For `summary`, parse `response.data.summary.targets[]` (not legacy candidate-sty
 - Repo root uses `git rev-parse --show-toplevel`; fallback is current working directory.
 - Mapping is stored in global `config.json` (`.../reflex-browser/config.json`) under `autoSessions`.
 - Stale/missing mapped sessions are recreated only by `start` and `open`.
+- Engine changes keep the same inferred auto-session id; `start`/`open` recreate that session with the configured engine when needed.
+- Non-bootstrap commands fail fast on engine mismatch so you do not silently keep driving the old engine session.
 - `reflex-browser start` without `--session` returns the existing healthy auto-session or recreates it.
 - `session-kill [targetSession]`:
   - with argument: kills that target session
@@ -186,9 +195,59 @@ For `summary`, parse `response.data.summary.targets[]` (not legacy candidate-sty
 
 ## Configuration
 
+You can configure the CLI globally, per project, or per run.
+
+Common places:
+
+- global: `~/.config/reflex-browser/config.json` on Linux/macOS, `%APPDATA%\\reflex-browser\\config.json` on Windows
+- per-repo: `.reflex-browser/config.json`
+- one-off override: `reflex-browser --config ./path/to/config.json ...`
+
+Example `config.json`:
+
+```json
+{
+  "agentUrl": "http://localhost:7001",
+  "agentKey": "dev",
+  "engine": "play",
+  "headless": true,
+  "width": 1440,
+  "height": 900,
+  "timeout": 15000,
+  "cliTimeout": 180000,
+  "openWait": "domcontentloaded"
+}
+```
+
+Example `config.yaml`:
+
+```yaml
+agentUrl: http://localhost:7001
+agentKey: dev
+engine: selenium
+headless: true
+width: 1440
+height: 900
+timeout: 15000
+cliTimeout: 180000
+openWait: domcontentloaded
+```
+
+Engine values:
+
+- `selenium` or `sel`
+- `playwright` or `play`
+
+Typical usage:
+
+- set `engine: "selenium"` when you want Selenium to be the default for this machine or repo
+- set `engine: "play"` when you want generated/recreated sessions to use Playwright
+- override per command with `--engine play` or `--engine sel`
+- when you switch engines, run `start` or `open` first; the CLI keeps the same inferred auto-session id and recreates that session with the new engine
+
 Config precedence:
 
-1. CLI flags (`--config`, `--profile`, `--cli-timeout`, command-specific options)
+1. CLI flags (`--config`, `--engine`, `--profile`, `--cli-timeout`, command-specific options)
 2. Environment variables
 3. Current working directory config (`.reflex-browser/config.{json,yaml,yml}`)
 4. Project config discovered by `cosmiconfig` (for example `.reflex-browser.json`)
@@ -198,19 +257,21 @@ Config precedence:
 
 Config keys:
 
-- `timeout`: backend Selenium retry timeout in milliseconds (session-level, default `10000`)
+- `engine`: browser engine for new/recreated sessions (`selenium` default; also accepts `sel`, `play`, `playwright`)
+- `timeout`: backend action timeout in milliseconds (session-level, default `10000`)
 - `cliTimeout`: CLI transport timeout in milliseconds (effective minimum `180000` unless `--cli-timeout` is explicitly passed)
 
 Environment variables:
 
 - `REFLEX_AGENT_URL`
 - `REFLEX_AGENT_KEY`
+- `REFLEX_BROWSER_ENGINE`
 - `REFLEX_BROWSER_PROFILE`
 - `REFLEX_BROWSER_HEADLESS`
 - `REFLEX_BROWSER_WIDTH`
 - `REFLEX_BROWSER_HEIGHT`
 - `REFLEX_BROWSER_TIMEOUT`
-  - backend Selenium retry timeout in milliseconds (default `10000`)
+  - backend action timeout in milliseconds (default `10000`)
 - `REFLEX_BROWSER_CLI_TIMEOUT`
   - defaults to at least `180000` ms for command-response waiting unless `--cli-timeout` is explicitly passed
 - `REFLEX_BROWSER_OPEN_WAIT` (`domcontentloaded`, `load`, `networkidle`)

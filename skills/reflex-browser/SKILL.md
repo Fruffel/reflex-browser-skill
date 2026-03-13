@@ -119,20 +119,22 @@ Helper script:
 5. Use bare `--session` (no value) only on `start` or `open` when a fresh backend-assigned session id is explicitly required.
 6. Do not pass `--session` by habit in single-flow tasks.
 7. Pass `--profile` only when persistent browser state is intentionally needed.
+8. Set `--engine selenium|playwright` (aliases: `sel`, `play`) before bootstrapping when the task specifically needs one engine.
 
 ## Hard Rules
 
-1. Bridge is Chrome-only.
+1. Bridge supports Selenium and Playwright; use `options.engine` as the canonical engine field.
 2. Do **not** send `options.browser`.
 3. Recompute selectors after DOM changes with `summary`.
    - Use `-i` for interactive discovery.
    - Add `-C` for cursor-interactive components.
    - Add `-c` to reduce structural noise.
    - Add `-s <selector>` to scope discovery to a container.
-4. Stop on first failed command (`ok: false`) to avoid cascading selector errors.
-5. Pass relative links directly to `open`; CLI resolves them against current session URL.
-6. For repeated-item extraction, anchor selectors at the collection parent (for example list/grid item), then index that parent; do not index unrelated descendants.
-7. Treat repeated `no such element` or timeout on the same intent as a selector-state mismatch, not a transient flake.
+4. Auto-session engine changes are applied by `start`/`open`, which recreate the same inferred auto-session id when needed.
+5. Stop on first failed command (`ok: false`) to avoid cascading selector errors.
+6. Pass relative links directly to `open`; CLI resolves them against current session URL.
+7. For repeated-item extraction, anchor selectors at the collection parent (for example list/grid item), then index that parent; do not index unrelated descendants.
+8. Treat repeated `no such element` or timeout on the same intent as a selector-state mismatch, not a transient flake.
 
 ## Wait Strategy (Required)
 

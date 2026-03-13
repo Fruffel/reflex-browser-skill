@@ -8,6 +8,7 @@
 4. End sessions explicitly with `session-kill`.
 5. Reuse active sessions before starting a new browser window.
 6. Do not keep repeating `--session` on every command unless you intentionally need an explicit override.
+7. When engine changes (`selenium` vs `playwright`), use `start` or `open` to recreate the same inferred auto-session id with the new engine.
 
 ## Stateless Workflow
 
@@ -28,6 +29,10 @@
 - `--profile <path>`:
   - enables persistent browser profile state
   - use only when persistent cookies/local storage are intentionally required
+
+- `--engine <selenium|playwright|sel|play>`:
+  - selects the backend engine for new or recreated sessions
+  - changing the engine does not mint a new inferred auto-session id; bootstrap commands recreate the existing one
 
 ## Lifecycle Commands
 
@@ -53,6 +58,11 @@ For action failures with stale DOM:
    - add `-C` when the UI is cursor-driven
 4. retry action with updated high-confidence selector hint
 5. request `html` only if hints remain weak after retries
+
+For auto-session engine mismatches:
+
+1. run `start` or `open` with the desired `--engine` to recreate the same inferred auto-session id
+2. rerun non-bootstrap commands only after that bootstrap succeeds
 
 For looped detail-page traversal:
 

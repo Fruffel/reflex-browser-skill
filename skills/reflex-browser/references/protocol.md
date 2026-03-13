@@ -13,6 +13,7 @@
 Global flags:
 
 - `--config <path>`
+- `--engine <selenium|playwright|sel|play>`
 - `--profile <path>`
 - `--cli-timeout <ms>`
 
@@ -42,6 +43,7 @@ CLI builds one backend payload with:
 - `session`
 - `profile`
 - `options` (only for bootstrap/open commands)
+  - `options.engine` is the canonical engine field for Selenium vs Playwright
 
 `wait`, `visible`, `enabled`, and `selected` optional timeout positional arg maps to an action-level check timeout override (not `arg2` and not `--cli-timeout`).
 
@@ -49,6 +51,8 @@ Smart preflight behavior:
 
 - if `open` receives a relative URL, CLI requests current URL and resolves `arg1` before sending `open`
 - missing/stale auto-sessions are recreated only by bootstrap navigation commands (`start`, `open`)
+- engine changes reuse the same inferred auto-session id; `start`/`open` recreate it when the active engine differs
+- non-bootstrap commands fail fast on auto-session engine mismatch until the session is recreated
 
 Connection lifecycle:
 

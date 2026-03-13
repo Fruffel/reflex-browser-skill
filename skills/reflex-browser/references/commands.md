@@ -97,6 +97,7 @@ Summary flags:
 Global flags for all commands:
 
 - `--config <path>`
+- `--engine <selenium|playwright|sel|play>`
 - `--profile <path>`
 - `--cli-timeout <ms>`
 
@@ -112,7 +113,7 @@ Bootstrap/open flags (only on `start`, `open`):
 - `--width <px>`
 - `--height <px>`
 - `--headless <true|false>`
-- `--timeout <ms>` (backend Selenium retry timeout for that session)
+- `--timeout <ms>` (backend action timeout for that session)
 - `--open-wait <domcontentloaded|load|networkidle>`
 
 `open` URL handling:
