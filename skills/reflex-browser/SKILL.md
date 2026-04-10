@@ -240,6 +240,8 @@ A browser session may originate from a handed-off Lua or Python script run, not 
 - This is **post-run handoff**, not pause/resume debugging — the script is fully finished before the browser session becomes CLI-controlled.
 - Handed-off sessions auto-expire after their TTL. Use `session-kill` for explicit cleanup.
 - After inspection, switch back to the `reflex-scripting` skill to fix and rerun the script.
+- For an existing saved script, use this handed-off browser session to gather evidence and validate selectors, not to replace the script-repair loop with repeated `lua exec` or `python exec` experiments.
+- Prefer a short inspect -> confirm -> return-to-file cycle: inspect with browser commands, edit the saved script, rerun the saved script.
 
 ## Hard Rules
 

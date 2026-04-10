@@ -173,6 +173,18 @@ When a Lua or Python script uses Selenium or Playwright and fails, the browser c
 4. Rerun the script from scratch — reruns always start fresh, not from the failure point.
 5. Clean up the debug session with `reflex browser session-kill --session <id>` if it is no longer needed.
 
+### Existing script repair loop (preferred)
+
+When the user already has a saved Lua or Python script and wants it fixed or improved:
+
+1. Treat the saved script file as the source of truth.
+2. Run the saved file with `reflex lua run ...` or `reflex python run ...`, preferably with `--debug on-error` for browser-backed flows.
+3. If the run emits `debug-ready`, switch to the `reflex-browser` skill to inspect the live browser and confirm the next fix.
+4. Return to the saved script file and edit that file directly.
+5. Rerun the saved script file.
+
+Use `reflex lua exec` or `reflex python exec` only for **small isolated probes** when they directly answer one narrow question. Do not let repeated `exec` snippets replace editing the real script file.
+
 ### Key constraints
 
 - This is **post-run handoff**, not pause/resume debugging. The script must finish before the browser becomes CLI-controlled.
@@ -195,9 +207,10 @@ When a Lua or Python script uses Selenium or Playwright and fails, the browser c
    - use `reflex lua libs` only when the correct library is genuinely unknown
 2. For browser-backed tasks, do browser discovery first (see `reflex-browser` skill).
 3. For non-browser tasks, start with the direct command if possible.
-4. Escalate to `reflex lua exec "..."` when you need loops, branching, or multiple calls.
-5. Write a saved script file only after the flow is understood and the user actually wants a reusable file.
-6. If the user explicitly asks for Python, switch the same workflow to `reflex python ...`.
+4. If you are fixing an existing saved script, edit and rerun that file instead of drifting into repeated `exec` snippets.
+5. Escalate to `reflex lua exec "..."` only when you need a short one-off probe or when there is no saved script to maintain.
+6. Write a saved script file only after the flow is understood and the user actually wants a reusable file.
+7. If the user explicitly asks for Python, switch the same workflow to `reflex python ...`.
 
 ## Anti-Patterns (Forbidden)
 
@@ -207,6 +220,7 @@ When a Lua or Python script uses Selenium or Playwright and fails, the browser c
 4. Restarting discovery from scratch when moving from browser to script — carry forward the validated flow.
 5. Treating browser, direct commands, and scripting as competing options instead of layers of the same tool.
 6. Stripping selector prefixes (`css=`, `xpath=`) when moving discovered selectors into scripts.
+7. Replacing an existing saved script with a long series of `reflex lua exec` retries instead of editing the real file.
 
 ## Worked Examples
 
