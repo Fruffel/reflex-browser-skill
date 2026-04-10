@@ -104,6 +104,23 @@ The script endpoints stream NDJSON events such as `start`, `stdout`, `result`, `
 
 For browser automation scripts, first use `reflex browser ...` to inspect the page, session behavior, and selectors. Then turn that knowledge into Lua or Python script code.
 
+### Script Debug Handoff
+
+When a script opens a browser and fails, you can keep the browser alive for inspection:
+
+```bash
+reflex lua run scripts/my-flow.lua --debug on-error
+reflex python run scripts/my-flow.py --debug always --debug-session my-debug --debug-ttl 600000
+```
+
+| Flag                                | Description                                                         |
+| ----------------------------------- | ------------------------------------------------------------------- |
+| `--debug <never\|on-error\|always>` | When to keep the browser alive after script exit. Default: `never`. |
+| `--debug-session <id>`              | Optional name for the handed-off browser session.                   |
+| `--debug-ttl <ms>`                  | Optional TTL in milliseconds. Session auto-expires if unclaimed.    |
+
+When handoff triggers, the run emits a `debug-ready` NDJSON event. The browser is then available via `reflex browser --session <id> ...` for inspection, screenshots, and repair.
+
 ## Generated Library Commands
 
 Generated commands come from agent metadata built from `@Lua`, `@LuaDoc`, and `@LuaInner`.

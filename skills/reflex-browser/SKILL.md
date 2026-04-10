@@ -222,6 +222,16 @@ The `reflex browser lua` command generates a Lua trace of the current browser se
 7. Pass `--profile` only when persistent browser state is intentionally needed.
 8. Set `--engine selenium|playwright` (aliases: `sel`, `play`) before bootstrapping when the task specifically needs one engine.
 
+## Handed-Off Script Sessions
+
+A browser session may originate from a handed-off Lua or Python script run, not just from a `reflex browser start` command.
+
+- When a script run with `--debug on-error` or `--debug always` finishes and the debug policy triggers, the script's browser is promoted into a named browser CLI session.
+- The run emits a `debug-ready` NDJSON event with the session id. Use `reflex browser --session <id> summary`, `screenshot`, `click`, etc. to inspect and manipulate the same browser.
+- This is **post-run handoff**, not pause/resume debugging — the script is fully finished before the browser session becomes CLI-controlled.
+- Handed-off sessions auto-expire after their TTL. Use `session-kill` for explicit cleanup.
+- After inspection, switch back to the `reflex-scripting` skill to fix and rerun the script.
+
 ## Hard Rules
 
 1. Bridge supports Selenium and Playwright; use `options.engine` as the canonical engine field.

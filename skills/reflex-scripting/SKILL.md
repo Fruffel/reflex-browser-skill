@@ -139,6 +139,44 @@ When a script automates a browser flow discovered via the `reflex-browser` skill
 4. Use `reflex browser lua` only after the browser flow is already stable; treat its output as a trace to refactor, not the final script.
 5. Do not restart with broad research once the browser flow is already validated.
 
+## Script Failure Handoff
+
+When a Lua or Python script uses Selenium or Playwright and fails, the browser can be kept alive for inspection and repair instead of being destroyed with the script.
+
+### How it works
+
+1. Run the script with `--debug on-error` (or `--debug always` to also keep the browser on success):
+   ```bash
+   reflex lua run scripts/my-flow.lua --debug on-error
+   reflex python run scripts/my-flow.py --debug on-error --debug-session my-debug
+   ```
+2. If the script fails and a browser was opened, the run emits a `debug-ready` NDJSON event with the session id, engine, TTL, and reason.
+3. The browser is now a regular browser CLI session — use `reflex browser --session <id> ...` to inspect it.
+
+### Debug flags
+
+| Flag                                | Description                                                                         |
+| ----------------------------------- | ----------------------------------------------------------------------------------- |
+| `--debug <never\|on-error\|always>` | When to keep the browser alive after script exit. Default: `never`.                 |
+| `--debug-session <id>`              | Optional session name for the handed-off browser session.                           |
+| `--debug-ttl <ms>`                  | Optional TTL in milliseconds for the handed-off session. Auto-expires if unclaimed. |
+
+### Agent workflow
+
+1. Run the script with `--debug on-error`.
+2. If the script fails and `debug-ready` is emitted, switch to the `reflex-browser` skill to:
+   - inspect the page with `summary`, `screenshot`, `text`, `attribute`
+   - try clicks or fills to understand the failure
+3. Return to `reflex-scripting` to apply the fix in the script file.
+4. Rerun the script from scratch — reruns always start fresh, not from the failure point.
+5. Clean up the debug session with `reflex browser session-kill --session <id>` if it is no longer needed.
+
+### Key constraints
+
+- This is **post-run handoff**, not pause/resume debugging. The script must finish before the browser becomes CLI-controlled.
+- Reruns always start the script from the top with a new browser.
+- Debug sessions auto-expire after the TTL if not claimed or used.
+
 ## Output Planning
 
 1. Verify the output library's constraints once before writing export logic.
